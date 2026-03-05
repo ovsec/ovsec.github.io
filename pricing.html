@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MCP Gateway — Pricing Calculator</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg-deep:    #030510;
+  --bg-mid:     #060d1f;
+  --bg-card:    rgba(255,255,255,0.03);
+  --aurora-green:  #00ffb2;
+  --aurora-teal:   #00d4ff;
+  --aurora-violet: #a855f7;
+  --aurora-pink:   #ff6ef7;
+  --aurora-blue:   #4f8eff;
+  --text-primary: #f0f4ff;
+  --text-secondary: #8892b0;
+  --text-muted: #4a5568;
+  --border: rgba(255,255,255,0.07);
+  --radius: 12px;
+  --radius-sm: 8px;
+}
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+body {
+  background: var(--bg-deep);
+  color: var(--text-primary);
+  font-family: 'Outfit', sans-serif;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* Aurora BG */
+.aurora-bg {
+  position: fixed; inset:0; z-index:0; overflow:hidden; pointer-events:none;
+}
+.aurora-orb {
+  position:absolute; border-radius:50%; filter:blur(80px); opacity:0.18;
+  animation: drift linear infinite;
+}
+.orb1 { width:700px;height:500px;background:radial-gradient(ellipse,#00ffb2,transparent 70%);top:-20%;left:-15%;animation-duration:22s; }
+.orb2 { width:600px;height:600px;background:radial-gradient(ellipse,#a855f7,transparent 70%);top:30%;right:-20%;animation-duration:28s;animation-delay:-8s; }
+.orb3 { width:500px;height:400px;background:radial-gradient(ellipse,#00d4ff,transparent 70%);bottom:-10%;left:30%;animation-duration:20s;animation-delay:-4s; }
+.orb4 { width:350px;height:350px;background:radial-gradient(ellipse,#ff6ef7,transparent 70%);top:60%;left:10%;opacity:0.1;animation-duration:32s;animation-delay:-14s; }
+@keyframes drift {
+  0%   { transform:translate(0,0) scale(1); }
+  25%  { transform:translate(40px,-30px) scale(1.05); }
+  50%  { transform:translate(-20px,50px) scale(0.95); }
+  75%  { transform:translate(60px,20px) scale(1.08); }
+  100% { transform:translate(0,0) scale(1); }
+}
+.aurora-bg::after {
+  content:''; position:absolute; inset:0;
+  background-image:linear-gradient(rgba(0,255,178,0.02) 1px,transparent 1px),linear-gradient(90deg,rgba(0,255,178,0.02) 1px,transparent 1px);
+  background-size:48px 48px;
+}
+
+/* Layout */
+.page { position:relative;z-index:1;max-width:960px;margin:0 auto;padding:64px 24px 96px; }
+
+/* Header */
+.header { text-align:center;margin-bottom:64px;animation:riseIn 0.8s cubic-bezier(.16,1,.3,1) both; }
+.logo-badge {
+  display:inline-flex;align-items:center;gap:8px;padding:8px 18px;border-radius:100px;
+  background:rgba(0,255,178,0.06);border:1px solid rgba(0,255,178,0.2);
+  font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--aurora-green);
+  letter-spacing:0.12em;text-transform:uppercase;margin-bottom:28px;
+}
+.logo-dot { width:7px;height:7px;background:var(--aurora-green);border-radius:50%;box-shadow:0 0 8px var(--aurora-green);animation:breathe 2.5s ease-in-out infinite; }
+@keyframes breathe { 0%,100%{opacity:1;box-shadow:0 0 8px var(--aurora-green);}50%{opacity:.5;box-shadow:0 0 16px var(--aurora-green);} }
+h1 { font-size:clamp(2.2rem,5vw,3.6rem);font-weight:800;letter-spacing:-0.04em;line-height:1.05;margin-bottom:16px; }
+.gradient-text {
+  background:linear-gradient(135deg,var(--aurora-green) 0%,var(--aurora-teal) 40%,var(--aurora-violet) 100%);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+}
+.header-sub { color:var(--text-secondary);font-size:16px;max-width:480px;margin:0 auto;line-height:1.6; }
+
+/* Step label */
+.step-label { display:flex;align-items:center;gap:12px;margin-bottom:18px; }
+.step-num {
+  width:26px;height:26px;border-radius:50%;
+  background:linear-gradient(135deg,var(--aurora-green),var(--aurora-teal));
+  display:flex;align-items:center;justify-content:center;
+  font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:500;color:#000;flex-shrink:0;
+}
+.step-title { font-size:13px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-secondary); }
+.step-line { flex:1;height:1px;background:linear-gradient(90deg,var(--border),transparent); }
+
+/* Section */
+.section { margin-bottom:36px; }
+.section:nth-child(1){animation:riseIn 0.7s 0.1s cubic-bezier(.16,1,.3,1) both;}
+.section:nth-child(2){animation:riseIn 0.7s 0.2s cubic-bezier(.16,1,.3,1) both;}
+.section:nth-child(3){animation:riseIn 0.7s 0.3s cubic-bezier(.16,1,.3,1) both;}
+.section:nth-child(4){animation:riseIn 0.7s 0.4s cubic-bezier(.16,1,.3,1) both;}
+@keyframes riseIn { from{opacity:0;transform:translateY(28px);}to{opacity:1;transform:translateY(0);} }
+
+/* Deployment cards */
+.dep-cards { display:grid;grid-template-columns:repeat(3,1fr);gap:14px; }
+.dep-card {
+  position:relative;background:var(--bg-card);border:1px solid var(--border);
+  border-radius:var(--radius);padding:24px 20px;cursor:pointer;
+  transition:all 0.3s cubic-bezier(.16,1,.3,1);overflow:hidden;
+}
+.dep-card::before {
+  content:'';position:absolute;inset:0;border-radius:var(--radius);
+  background:linear-gradient(135deg,rgba(0,255,178,0.06),rgba(79,142,255,0.06));
+  opacity:0;transition:opacity 0.3s;
+}
+.dep-card:hover{border-color:rgba(0,255,178,0.3);transform:translateY(-3px);}
+.dep-card:hover::before{opacity:1;}
+.dep-card.active{border-color:var(--aurora-green);background:rgba(0,255,178,0.05);box-shadow:0 0 30px rgba(0,255,178,0.1),inset 0 0 30px rgba(0,255,178,0.03);}
+.dep-card.active::before{opacity:1;}
+.dep-card.active::after{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--aurora-green),var(--aurora-teal),var(--aurora-violet));border-radius:2px 2px 0 0;}
+.dep-card input[type="radio"]{display:none;}
+.dep-icon{font-size:28px;margin-bottom:12px;display:block;}
+.dep-name{font-size:14px;font-weight:700;margin-bottom:6px;letter-spacing:-0.02em;}
+.dep-desc{font-family:'JetBrains Mono',monospace;font-size:10.5px;color:var(--text-muted);line-height:1.6;}
+.dep-badge{margin-top:14px;display:inline-block;padding:3px 10px;border-radius:100px;font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:500;letter-spacing:0.05em;}
+.badge-green{background:rgba(0,255,178,0.1);color:var(--aurora-green);}
+.badge-blue{background:rgba(0,212,255,0.1);color:var(--aurora-teal);}
+.badge-violet{background:rgba(168,85,247,0.1);color:var(--aurora-violet);}
+
+/* Config */
+.config-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.config-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-sm);padding:18px 20px;transition:border-color 0.2s;}
+.config-card:hover{border-color:rgba(0,255,178,0.15);}
+.config-label{font-family:'JetBrains Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:0.12em;color:var(--text-muted);margin-bottom:12px;}
+
+select {
+  width:100%;background:rgba(0,0,0,0.3);border:1px solid var(--border);
+  color:var(--text-primary);font-family:'Outfit',sans-serif;font-size:14px;font-weight:500;
+  padding:10px 36px 10px 14px;border-radius:8px;outline:none;cursor:pointer;appearance:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%234a5568' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 14px center;transition:border-color 0.2s,box-shadow 0.2s;
+}
+select:focus{border-color:var(--aurora-green);box-shadow:0 0 0 3px rgba(0,255,178,0.1);}
+
+.pill-toggle{display:flex;background:rgba(0,0,0,0.3);border:1px solid var(--border);border-radius:8px;overflow:hidden;gap:2px;padding:3px;}
+.pill-toggle input[type="radio"]{display:none;}
+.pill-toggle label{flex:1;text-align:center;padding:9px 10px;font-size:13px;font-weight:500;color:var(--text-muted);cursor:pointer;border-radius:6px;transition:all 0.2s;white-space:nowrap;}
+.pill-toggle input:checked + label{background:linear-gradient(135deg,rgba(0,255,178,0.2),rgba(0,212,255,0.2));color:var(--aurora-green);font-weight:600;box-shadow:0 0 12px rgba(0,255,178,0.1);}
+
+/* Connectors */
+.connector-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;}
+.conn-item{display:flex;align-items:center;gap:12px;background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px 16px;cursor:pointer;transition:all 0.2s;user-select:none;}
+.conn-item:hover{border-color:rgba(0,255,178,0.2);}
+.conn-item.checked{border-color:var(--aurora-green);background:rgba(0,255,178,0.05);}
+.conn-item input[type="checkbox"]{display:none;}
+.conn-check{width:18px;height:18px;border:1.5px solid var(--border);border-radius:5px;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all 0.2s;font-size:10px;}
+.conn-item.checked .conn-check{background:linear-gradient(135deg,var(--aurora-green),var(--aurora-teal));border-color:var(--aurora-green);color:#000;box-shadow:0 0 10px rgba(0,255,178,0.4);}
+.conn-info{flex:1;}
+.conn-name{font-size:13px;font-weight:600;margin-bottom:2px;}
+.conn-tag{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text-muted);}
+.conn-price{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--aurora-violet);font-weight:500;}
+
+/* Result panel */
+.result-panel{margin-top:40px;position:relative;border-radius:16px;overflow:hidden;animation:riseIn 0.7s 0.5s cubic-bezier(.16,1,.3,1) both;}
+.result-panel::before{content:'';position:absolute;inset:-1px;border-radius:17px;background:linear-gradient(135deg,var(--aurora-green),var(--aurora-teal),var(--aurora-violet),var(--aurora-pink));z-index:-1;animation:rotateBorder 6s linear infinite;background-size:300% 300%;}
+@keyframes rotateBorder{0%{background-position:0% 50%;}50%{background-position:100% 50%;}100%{background-position:0% 50%;}}
+.result-inner{background:#08101e;border-radius:15px;padding:36px;position:relative;overflow:hidden;}
+.result-inner::before{content:'';position:absolute;width:400px;height:300px;top:-100px;right:-100px;background:radial-gradient(ellipse,rgba(168,85,247,0.08),transparent 70%);pointer-events:none;}
+.result-inner::after{content:'';position:absolute;width:300px;height:300px;bottom:-100px;left:-50px;background:radial-gradient(ellipse,rgba(0,255,178,0.06),transparent 70%);pointer-events:none;}
+
+.result-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:32px;flex-wrap:wrap;gap:16px;position:relative;z-index:1;}
+.result-label{font-family:'JetBrains Mono',monospace;font-size:11px;text-transform:uppercase;letter-spacing:0.15em;color:var(--text-muted);}
+
+.billing-sw{display:flex;background:rgba(0,0,0,0.4);border:1px solid var(--border);border-radius:100px;padding:4px;gap:2px;}
+.billing-sw input[type="radio"]{display:none;}
+.billing-sw label{padding:8px 18px;border-radius:100px;font-size:12px;font-weight:600;color:var(--text-muted);cursor:pointer;transition:all 0.25s;letter-spacing:0.02em;}
+.billing-sw input:checked + label{background:linear-gradient(135deg,var(--aurora-green),var(--aurora-teal));color:#000;box-shadow:0 0 16px rgba(0,255,178,0.3);}
+
+.price-block{margin-bottom:8px;position:relative;z-index:1;}
+.price-row{display:flex;align-items:baseline;gap:10px;margin-bottom:6px;}
+.price-amount{font-size:clamp(3rem,7vw,5rem);font-weight:800;letter-spacing:-0.05em;line-height:1;background:linear-gradient(135deg,var(--aurora-green) 0%,var(--aurora-teal) 60%,var(--aurora-blue) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;transition:all 0.4s cubic-bezier(.16,1,.3,1);}
+.price-period{font-family:'JetBrains Mono',monospace;font-size:14px;color:var(--text-secondary);}
+.price-savings{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--aurora-violet);min-height:20px;margin-bottom:28px;position:relative;z-index:1;}
+
+.line-items{border-top:1px solid var(--border);padding-top:24px;margin-bottom:28px;display:flex;flex-direction:column;gap:12px;position:relative;z-index:1;}
+.li-row{display:flex;justify-content:space-between;align-items:center;gap:16px;}
+.li-label{font-family:'JetBrains Mono',monospace;font-size:11.5px;color:var(--text-secondary);}
+.li-val{font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:500;color:var(--text-primary);white-space:nowrap;}
+.li-row.total-row{border-top:1px solid var(--border);padding-top:12px;margin-top:4px;}
+.li-row.total-row .li-label{font-size:12px;font-weight:700;color:var(--text-primary);text-transform:uppercase;letter-spacing:0.08em;}
+.li-row.total-row .li-val{font-size:15px;background:linear-gradient(135deg,var(--aurora-green),var(--aurora-teal));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+
+.cta-row{display:flex;gap:12px;position:relative;z-index:1;flex-wrap:wrap;}
+.btn-aurora{flex:1;min-width:160px;position:relative;padding:15px 28px;border:none;border-radius:10px;font-family:'Outfit',sans-serif;font-size:15px;font-weight:700;cursor:pointer;overflow:hidden;transition:transform 0.2s,box-shadow 0.2s;background:linear-gradient(135deg,var(--aurora-green),var(--aurora-teal));color:#000;letter-spacing:-0.01em;}
+.btn-aurora::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,var(--aurora-teal),var(--aurora-violet));opacity:0;transition:opacity 0.3s;}
+.btn-aurora:hover{transform:translateY(-2px);box-shadow:0 8px 32px rgba(0,255,178,0.3);}
+.btn-aurora:hover::before{opacity:1;}
+.btn-aurora span{position:relative;z-index:1;}
+.btn-outline{padding:15px 28px;border-radius:10px;font-family:'Outfit',sans-serif;font-size:15px;font-weight:600;cursor:pointer;background:transparent;border:1px solid var(--border);color:var(--text-secondary);transition:all 0.2s;letter-spacing:-0.01em;}
+.btn-outline:hover{border-color:var(--aurora-teal);color:var(--aurora-teal);background:rgba(0,212,255,0.05);}
+.result-note{margin-top:20px;font-family:'JetBrains Mono',monospace;font-size:10.5px;color:var(--text-muted);text-align:center;line-height:1.7;position:relative;z-index:1;}
+
+@media(max-width:640px){
+  .dep-cards{grid-template-columns:1fr;}
+  .config-grid{grid-template-columns:1fr;}
+  .connector-grid{grid-template-columns:1fr;}
+  .result-inner{padding:24px 20px;}
+}
+</style>
+</head>
+<body>
+
+<div class="aurora-bg">
+  <div class="aurora-orb orb1"></div>
+  <div class="aurora-orb orb2"></div>
+  <div class="aurora-orb orb3"></div>
+  <div class="aurora-orb orb4"></div>
+</div>
+
+<div class="page">
+
+  <div class="header">
+    <div class="logo-badge"><span class="logo-dot"></span>MCP API Gateway</div>
+    <h1><span class="gradient-text">Pricing Calculator</span></h1>
+    <p class="header-sub">Configure your deployment model and get an instant estimate. No sign-up required.</p>
+  </div>
+
+  <!-- Step 1 -->
+  <div class="section">
+    <div class="step-label">
+      <div class="step-num">1</div>
+      <div class="step-title">Deployment Model</div>
+      <div class="step-line"></div>
+    </div>
+    <div class="dep-cards">
+      <label class="dep-card active" id="card-onprem">
+        <input type="radio" name="deployment" value="onprem" checked onchange="calculate()">
+        <span class="dep-icon">🏢</span>
+        <div class="dep-name">On-Premises</div>
+        <div class="dep-desc">Your data center. Full control. Air-gap &amp; compliance ready.</div>
+        <span class="dep-badge badge-green">Air-gap Ready</span>
+      </label>
+      <label class="dep-card" id="card-saas">
+        <input type="radio" name="deployment" value="saas" onchange="calculate()">
+        <span class="dep-icon">☁️</span>
+        <div class="dep-name">Vendor Cloud (SaaS)</div>
+        <div class="dep-desc">Fully managed. Fastest time to production. Zero infra overhead.</div>
+        <span class="dep-badge badge-blue">Fastest Setup</span>
+      </label>
+      <label class="dep-card" id="card-byoc">
+        <input type="radio" name="deployment" value="byoc" onchange="calculate()">
+        <span class="dep-icon">🔧</span>
+        <div class="dep-name">Your Cloud (BYOC)</div>
+        <div class="dep-desc">AWS / Azure / GCP. Your account &amp; spend, our software.</div>
+        <span class="dep-badge badge-violet">Use Cloud Credits</span>
+      </label>
+    </div>
+  </div>
+
+  <!-- Step 2 -->
+  <div class="section">
+    <div class="step-label">
+      <div class="step-num">2</div>
+      <div class="step-title">Configuration</div>
+      <div class="step-line"></div>
+    </div>
+    <div class="config-grid">
+      <div class="config-card">
+        <div class="config-label">Environments</div>
+        <select id="environments" onchange="calculate()">
+          <option value="1">1 — Production only</option>
+          <option value="2">2 — Prod + Staging</option>
+          <option value="3">3 — Prod + Staging + Dev</option>
+        </select>
+      </div>
+      <div class="config-card" id="tier-group">
+        <div class="config-label">SaaS Tier</div>
+        <select id="saas-tier" onchange="calculate()">
+          <option value="starter">Starter — up to 50k calls/mo</option>
+          <option value="business">Business — up to 250k calls/mo</option>
+          <option value="enterprise">Enterprise — unlimited</option>
+        </select>
+      </div>
+      <div class="config-card">
+        <div class="config-label">Support Tier</div>
+        <select id="support" onchange="calculate()">
+          <option value="standard">Standard (included)</option>
+          <option value="premium">Premium — dedicated CSM (+$1,200/mo)</option>
+        </select>
+      </div>
+      <div class="config-card">
+        <div class="config-label">LLM Provider</div>
+        <div class="pill-toggle">
+          <input type="radio" name="llm" id="llm-byollm" value="byollm" checked onchange="calculate()">
+          <label for="llm-byollm">BYOLLM</label>
+          <input type="radio" name="llm" id="llm-vendor" value="vendor" onchange="calculate()">
+          <label for="llm-vendor">Vendor (+$200/mo)</label>
+        </div>
+      </div>
+      <div class="config-card">
+        <div class="config-label">Microsoft Teams Bot</div>
+        <div class="pill-toggle">
+          <input type="radio" name="teams" id="teams-no" value="no" checked onchange="calculate()">
+          <label for="teams-no">Not needed</label>
+          <input type="radio" name="teams" id="teams-yes" value="yes" onchange="calculate()">
+          <label for="teams-yes">Add (+$1,500)</label>
+        </div>
+      </div>
+      <div class="config-card">
+        <div class="config-label">Ollama / Local LLM Setup</div>
+        <div class="pill-toggle">
+          <input type="radio" name="ollama" id="ollama-no" value="no" checked onchange="calculate()">
+          <label for="ollama-no">Not needed</label>
+          <input type="radio" name="ollama" id="ollama-yes" value="yes" onchange="calculate()">
+          <label for="ollama-yes">Add (+$1,000)</label>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Step 3 -->
+  <div class="section">
+    <div class="step-label">
+      <div class="step-num">3</div>
+      <div class="step-title">Connector Packs</div>
+      <div class="step-line"></div>
+    </div>
+    <div class="connector-grid">
+      <label class="conn-item" id="conn-erp">
+        <input type="checkbox" onchange="toggleConn(this,'conn-erp'); calculate()">
+        <div class="conn-check">✓</div>
+        <div class="conn-info">
+          <div class="conn-name">🏭 ERP / SAP IBP</div>
+          <div class="conn-tag">Planning, Master Data, OData</div>
+        </div>
+        <div class="conn-price">$3,500/yr</div>
+      </label>
+      <label class="conn-item" id="conn-crm">
+        <input type="checkbox" onchange="toggleConn(this,'conn-crm'); calculate()">
+        <div class="conn-check">✓</div>
+        <div class="conn-info">
+          <div class="conn-name">💼 CRM / Salesforce</div>
+          <div class="conn-tag">Accounts, Leads, Opportunities</div>
+        </div>
+        <div class="conn-price">$3,500/yr</div>
+      </label>
+      <label class="conn-item" id="conn-hr">
+        <input type="checkbox" onchange="toggleConn(this,'conn-hr'); calculate()">
+        <div class="conn-check">✓</div>
+        <div class="conn-info">
+          <div class="conn-name">👥 HR Systems</div>
+          <div class="conn-tag">Employees, Payroll, Org structure</div>
+        </div>
+        <div class="conn-price">$3,500/yr</div>
+      </label>
+      <label class="conn-item" id="conn-logistics">
+        <input type="checkbox" onchange="toggleConn(this,'conn-logistics'); calculate()">
+        <div class="conn-check">✓</div>
+        <div class="conn-info">
+          <div class="conn-name">🚚 Logistics</div>
+          <div class="conn-tag">Shipments, Inventory, Carriers</div>
+        </div>
+        <div class="conn-price">$3,500/yr</div>
+      </label>
+    </div>
+  </div>
+
+  <!-- Result -->
+  <div class="result-panel">
+    <div class="result-inner">
+      <div class="result-top">
+        <div class="result-label">Estimated Cost</div>
+        <div class="billing-sw">
+          <input type="radio" name="billing" id="bill-mo" value="monthly" checked onchange="calculate()">
+          <label for="bill-mo">Monthly</label>
+          <input type="radio" name="billing" id="bill-yr" value="annual" onchange="calculate()">
+          <label for="bill-yr">Annual</label>
+        </div>
+      </div>
+      <div class="price-block">
+        <div class="price-row">
+          <div class="price-amount" id="price-display">$1,500</div>
+          <div class="price-period" id="price-period">/month</div>
+        </div>
+      </div>
+      <div class="price-savings" id="savings-text"></div>
+      <div class="line-items" id="line-items"></div>
+      <div class="cta-row">
+        <button class="btn-aurora"><span>Get a Formal Quote →</span></button>
+        <button class="btn-outline">Talk to Sales</button>
+      </div>
+      <p class="result-note">
+        Estimates are indicative. Final pricing depends on contract terms, volume &amp; region.<br>
+        One-time fees (implementation, add-ons) are shown separately from recurring costs.
+      </p>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const P = {
+  onprem: { base:18000, extraEnv:4500, connector:3500, impl:8500 },
+  saas:   { starter:399, business:1299, enterprise:3500 },
+  byoc:   { base:12000, extraEnv:3500, connector:3000, impl:3500 },
+  support_premium: 1200,
+  llm_vendor: 200,
+  teams: 1500,
+  ollama: 1000,
+};
+
+function dep()     { return document.querySelector('input[name="deployment"]:checked').value; }
+function billing() { return document.querySelector('input[name="billing"]:checked').value; }
+function fmt(n)    { return '$' + Math.round(n).toLocaleString(); }
+
+function toggleConn(el, id) {
+  document.getElementById(id).classList.toggle('checked', el.checked);
+}
+
+function calculate() {
+  const d = dep();
+  const envs = parseInt(document.getElementById('environments').value);
+  const tier = document.getElementById('saas-tier').value;
+  const supportPremium = document.getElementById('support').value === 'premium';
+  const llmVendor = document.querySelector('input[name="llm"]:checked').value === 'vendor';
+  const teamsOn   = document.querySelector('input[name="teams"]:checked').value === 'yes';
+  const ollamaOn  = document.querySelector('input[name="ollama"]:checked').value === 'yes';
+  const connCount = document.querySelectorAll('.conn-item input:checked').length;
+
+  ['onprem','saas','byoc'].forEach(k =>
+    document.getElementById('card-' + k).classList.toggle('active', d === k)
+  );
+  document.getElementById('tier-group').style.display = d === 'saas' ? '' : 'none';
+
+  let annualRecurring = 0, oneTime = 0, lines = [];
+
+  if (d === 'onprem') {
+    const base = P.onprem.base;
+    const envExtra = (envs - 1) * P.onprem.extraEnv;
+    const conn = connCount * P.onprem.connector;
+    const sup  = supportPremium ? P.support_premium * 12 : 0;
+    const llm  = llmVendor ? P.llm_vendor * 12 : 0;
+    annualRecurring = base + envExtra + conn + sup + llm;
+    oneTime = P.onprem.impl;
+    lines = [
+      { l:'Platform license (prod env)', v: fmt(base)+'/yr' },
+      ...(envExtra ? [{ l:`Extra environments ×${envs-1}`, v: fmt(envExtra)+'/yr' }] : []),
+      ...(conn ? [{ l:`Connector packs ×${connCount}`, v: fmt(conn)+'/yr' }] : []),
+      ...(sup  ? [{ l:'Premium support', v: fmt(sup)+'/yr' }] : []),
+      ...(llm  ? [{ l:'Vendor LLM access', v: fmt(llm)+'/yr' }] : []),
+    ];
+  } else if (d === 'saas') {
+    const base = P.saas[tier];
+    const sup  = supportPremium ? P.support_premium : 0;
+    const llm  = llmVendor ? P.llm_vendor : 0;
+    annualRecurring = (base + sup + llm) * 12;
+    lines = [
+      { l:`${tier.charAt(0).toUpperCase()+tier.slice(1)} plan`, v: fmt(base)+'/mo' },
+      ...(sup ? [{ l:'Premium support', v: fmt(sup)+'/mo' }] : []),
+      ...(llm ? [{ l:'Vendor LLM access', v: fmt(llm)+'/mo' }] : []),
+    ];
+  } else {
+    const base = P.byoc.base;
+    const envExtra = (envs - 1) * P.byoc.extraEnv;
+    const conn = connCount * P.byoc.connector;
+    const sup  = supportPremium ? P.support_premium * 12 : 0;
+    const llm  = llmVendor ? P.llm_vendor * 12 : 0;
+    annualRecurring = base + envExtra + conn + sup + llm;
+    oneTime = P.byoc.impl;
+    lines = [
+      { l:'Software license (1 cluster)', v: fmt(base)+'/yr' },
+      ...(envExtra ? [{ l:`Extra environments ×${envs-1}`, v: fmt(envExtra)+'/yr' }] : []),
+      ...(conn ? [{ l:`Connector packs ×${connCount}`, v: fmt(conn)+'/yr' }] : []),
+      ...(sup  ? [{ l:'Premium support', v: fmt(sup)+'/yr' }] : []),
+      ...(llm  ? [{ l:'Vendor LLM access', v: fmt(llm)+'/yr' }] : []),
+    ];
+  }
+
+  if (teamsOn)  lines.push({ l:'Teams bot setup (one-time)', v: fmt(P.teams) });
+  if (ollamaOn) lines.push({ l:'Ollama / local LLM setup (one-time)', v: fmt(P.ollama) });
+  if (oneTime)  lines.push({ l:'Implementation support (one-time)', v: fmt(oneTime) });
+
+  const discountRate = d === 'saas' ? 0.15 : 0.10;
+  const annualDiscounted = annualRecurring * (1 - discountRate);
+  const isAnnual = billing() === 'annual';
+
+  let displayAmt, period;
+  if (d === 'saas') {
+    displayAmt = isAnnual ? annualDiscounted / 12 : annualRecurring / 12;
+    period = isAnnual ? '/month (billed annually)' : '/month';
+  } else {
+    displayAmt = isAnnual ? annualDiscounted : annualRecurring / 12;
+    period = isAnnual ? '/year (billed annually)' : '/month (est.)';
+  }
+
+  document.getElementById('price-display').textContent = fmt(displayAmt);
+  document.getElementById('price-period').textContent  = period;
+
+  const saved = annualRecurring - annualDiscounted;
+  document.getElementById('savings-text').textContent = isAnnual
+    ? `✦ Annual billing saves you ${fmt(saved)}/year (${Math.round(discountRate*100)}% off)`
+    : '';
+
+  const totalVal = isAnnual
+    ? fmt(annualDiscounted) + (d === 'saas' ? '/yr' : '/yr')
+    : fmt(annualRecurring / 12) + (d === 'saas' ? '/mo' : '/mo (est.)');
+
+  lines.push({ l:'ESTIMATED TOTAL', v: totalVal, total: true });
+
+  document.getElementById('line-items').innerHTML = lines.map(item => `
+    <div class="li-row ${item.total ? 'total-row' : ''}">
+      <span class="li-label">${item.l}</span>
+      <span class="li-val">${item.v}</span>
+    </div>
+  `).join('');
+}
+
+calculate();
+</script>
+</body>
+</html>
